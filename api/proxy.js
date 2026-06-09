@@ -49,17 +49,25 @@ export default async function handler(req) {
       headers: headers,
     };
 
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      options.body = req.body; // Pipe the stream directly
+    // Read body completely into memory to prevent Transfer-Encoding: chunked
+    // Cloudflare Workers often drop chunked requests silently, causing timeouts.
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+      const bodyText = await req.text();
+      if (bodyText) {
+        options.body = bodyText;
+      }
     }
 
     const fetchRes = await fetch(targetUrl.toString(), options);
+    
+    // Read the response completely before returning to avoid partial stream failures
+    const responseBody = await fetchRes.text();
     
     // Copy response headers and inject CORS
     const responseHeaders = new Headers(fetchRes.headers);
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     
-    return new Response(fetchRes.body, {
+    return new Response(responseBody, {
       status: fetchRes.status,
       statusText: fetchRes.statusText,
       headers: responseHeaders
