@@ -635,7 +635,7 @@
       </div>
 
       <div class="access-footer">
-        <a href="index.html">asmultiverse.in</a> · Free educational content
+        <a href="index.html">nexttoppers.asmultiverse.in</a> © Free educational content
       </div>
     </div>
   </div>
@@ -776,34 +776,36 @@
           destUrl += '&redirect=' + encodeURIComponent(urlParams.get('redirect'));
         }
         
-        // 4. Call AroLinks API
-        const apiUrl = \`https://arolinks.com/api?api=\${AROLINKS_API_TOKEN}&url=\${encodeURIComponent(destUrl)}\`;
+        // 4. Call our Vercel API proxy to securely bypass CORS
+        const apiUrl = `/api/arolinks?url=${encodeURIComponent(destUrl)}`;
         
         const res = await fetch(apiUrl);
         const data = await res.json();
         
         if (data.status === 'success' && data.shortenedUrl) {
-          // Open the short link in a new tab
-          window.open(data.shortenedUrl, '_blank', 'noopener,noreferrer');
-          
-          // Move user to step 2 after a short delay
-          setTimeout(() => goToStep(2), 1500);
+          // Redirect the user in the same tab to avoid browser popup blockers
+          window.location.href = data.shortenedUrl;
         } else {
-          alert('Failed to generate link. ' + (data.message || ''));
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Network error. Please try again.');
-      }
-      
-      // Reset button
-      btn.disabled = false;
-      btn.innerHTML = \`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          alert('Failed to generate link. ' + (data.message || 'Check your internet or Adblocker.'));
+          // Reset button on failure
+          btn.disabled = false;
+          btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
             <polyline points="15 3 21 3 21 9"/>
             <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          Get Access Code\`;
+          </svg> Get Access Code`;
+        }
+      } catch (err) {
+        console.error("CORS or Network Error:", err);
+        alert('Network error. A browser extension or CORS policy might be blocking the request. Please try again.');
+        // Reset button on failure
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg> Get Access Code`;
+      }
     }
 
     // ---- PASTE ----
