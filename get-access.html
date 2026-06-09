@@ -884,7 +884,7 @@
         const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
         const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
         const s = String(totalSec % 60).padStart(2, '0');
-        document.getElementById('countdownTimer').textContent = \`\${h}:\${m}:\${s}\`;
+        document.getElementById('countdownTimer').textContent = `${h}:${m}:${s}`;
       }
 
       update();
@@ -912,7 +912,7 @@
         const h = Math.floor(totalSec / 3600);
         const m = Math.floor((totalSec % 3600) / 60);
         const bannerText = document.querySelector('.active-banner-text');
-        bannerText.textContent = \`✅ Active access! \${h}h \${m}m remaining\`;
+        bannerText.textContent = `✅ Active access! ${h}h ${m}m remaining`;
       }
     }
   </script>
