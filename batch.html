@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asmultiverse | Batch Details</title>
+  <link rel="shortcut icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Batch specific styles */
+    .batch-header {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(59, 130, 246, 0.15));
+      border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+      padding: 32px 16px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.05);
+    }
+    .batch-header-img {
+      width: 160px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .batch-header-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-display);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      color: var(--stone-400);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+    .tab-btn.active {
+      background: rgba(0, 212, 255, 0.2);
+      color: var(--cyan);
+      border-color: rgba(0, 212, 255, 0.5);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 24px 0;
+      animation: fadeUp 0.4s var(--ease-out-expo) forwards;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+    .item-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.1);
+    }
+    .item-thumb {
+      aspect-ratio: 16/9;
+      width: 100%;
+      object-fit: cover;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .item-info {
+      padding: 16px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .item-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .item-meta {
+      font-size: 12px;
+      color: var(--stone-400);
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Live Subtabs */
+    .subtabs {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .subtab-btn {
+      color: var(--stone-400);
+      font-weight: 600;
+      padding-bottom: 8px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+    .subtab-btn.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+    }
+
+    /* Breadcrumbs */
+    .breadcrumbs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: var(--stone-400);
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 8px;
+    }
+    .crumb {
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .crumb:hover { color: #fff; }
+    .crumb.active { color: var(--cyan); pointer-events: none; }
+
+    /* Loading overlay */
+    .fullscreen-loader {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .fullscreen-loader.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Badges */
+    .badge-live {
+      position: absolute;
+      top: 12px; left: 12px;
+      background: rgba(239, 68, 68, 0.9);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-live::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    .badge-soon {
+      position: absolute;
+      top: 12px; left: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px dashed var(--cyan);
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Countdown */
+    .countdown-timer {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--cyan);
+      background: rgba(0, 212, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 12px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="batch-header">
+    <div class="container" style="display:flex; gap:24px; align-items:center;">
+      <img id="batchThumb" src="logo.png" class="batch-header-img" alt="Batch Thumbnail">
+      <div>
+        <a href="index.html" style="color:var(--cyan); font-size:14px; margin-bottom:8px; display:inline-block; font-weight:600;">← Back to Batches</a>
+        <h1 id="batchTitle" class="batch-header-title">Loading...</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+      <button class="tab-btn" onclick="switchTab('content')">Content</button>
+      <button class="tab-btn" onclick="switchTab('live')">
+        Live Classes
+        <div style="width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite"></div>
+      </button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview" class="tab-content active">
+      <div id="overviewSpinner" style="text-align:center; padding:40px;"><div class="spinner spinner-cyan" style="margin:auto"></div></div>
+      <div id="overviewData" style="display:none; max-width:800px;">
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:24px;">
+          <h2 id="ovPrice" style="font-size:32px; font-weight:800; color:var(--cyan);"></h2>
+          <span id="ovMrp" style="text-decoration:line-through; color:var(--stone-500); font-size:18px;"></span>
+          <span id="ovDiscount" style="background:rgba(34,197,94,0.1); color:var(--green-500); padding:4px 8px; border-radius:6px; font-size:14px; font-weight:700;"></span>
+        </div>
+        <div id="ovDesc" style="line-height:1.6; color:var(--stone-200); font-size:15px; background:rgba(255,255,255,0.03); padding:24px; border-radius:16px; border:1px solid rgba(255,255,255,0.05);"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT TAB -->
+    <div id="tab-content" class="tab-content">
+      <div class="breadcrumbs" id="breadcrumbs"></div>
+      <div id="contentSpinner" style="text-align:center; padding:40px; display:none;"><div class="spinner spinner-cyan" style="margin:auto"></div></div>
+      <div id="contentGrid" class="card-grid"></div>
+    </div>
+
+    <!-- LIVE TAB -->
+    <div id="tab-live" class="tab-content">
+      <div class="subtabs">
+        <button class="subtab-btn active" id="btnLive" onclick="switchLiveTab('live')">LIVE NOW</button>
+        <button class="subtab-btn" id="btnUpcoming" onclick="switchLiveTab('upcoming')">UPCOMING</button>
+      </div>
+      <div id="liveSpinner" style="text-align:center; padding:40px; display:none;"><div class="spinner spinner-cyan" style="margin:auto"></div></div>
+      <div id="liveGrid" class="card-grid"></div>
+      <div id="liveEmpty" style="display:none; text-align:center; padding:60px 20px;">
+        <div style="font-size:48px; margin-bottom:16px; animation:gentleBounce 2s infinite">📺</div>
+        <div style="color:var(--stone-400); font-weight:500;">No classes right now.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fullscreen-loader" id="loader">
+    <div class="spinner spinner-cyan" style="width:64px; height:64px;"></div>
+    <div style="margin-top:20px; font-weight:700; color:var(--cyan); letter-spacing:1px; animation:pulse 1s infinite;">PREPARING PLAYER...</div>
+  </div>
+
+  <script>
+    const allBatches = [
+      {id:183,title:'NIRMAAN SUMMER CAMP 2026-27',thumbnail:'https://dylnd2lqy6eys.cloudfront.net/1770981347/admin_v2/uploads/courses/thumbnail/1583344_125_Nirmaan%20Summer%20Camp%20App%20Banners09%20%281%29.jpg'},
+      {id:177,title:'NIRMAAN BATCH CLASS 8TH 2026-27'},{id:178,title:'AARAMBH 9TH BATCH 2026-27'},{id:179,title:'AARAMBH PLUS 9TH BATCH 2026-27'},{id:176,title:'AARAMBH 10TH BATCH 2026-27'},
+      {id:107,title:'SCIENCE (PCMB) 11TH - PRARAMBH 2026-27'},{id:108,title:'COMMERCE 11TH - PRARAMBH 2026-27'},{id:109,title:'HUMANITIES 11TH - PRARAMBH 2026-27'},
+      {id:112,title:'SCIENCE (PCMB) 11TH - PRARAMBH PLUS 2026-27'},{id:110,title:'COMMERCE 11TH - PRARAMBH PLUS 2026-27'},{id:111,title:'HUMANITIES 11TH - PRARAMBH PLUS 2026-27'},
+      {id:103,title:'SCIENCE (PCMB) 12TH - PRARAMBH 2026-27'},{id:101,title:'COMMERCE 12TH - PRARAMBH 2026-27'},{id:105,title:'HUMANITIES 12TH - PRARAMBH 2026-27'},
+      {id:104,title:'SCIENCE (PCMB) 12TH - PRARAMBH PRO 2026-27'},{id:102,title:'COMMERCE 12TH - PRARAMBH PRO 2026-27'},{id:106,title:'HUMANITIES 12TH - PRARAMBH PRO 2026-27'},
+      {id:122,title:'CUET (SCIENCE) 2026-27'},{id:123,title:'CUET (HUMANITIES) 2026-27'},{id:124,title:'CUET (COMMERCE) 2026-27'},
+      {id:62,title:'AARAMBH 2.O 10TH BATCH 2025-26'},{id:64,title:'AARAMBH 2.O 9TH BATCH 2025-26'},
+      {id:78,title:'ABHAY 10TH BATCH 2025-26'},{id:81,title:'ABHAY 9TH BATCH 2025-26'},
+      {id:83,title:'UP BOARD ABHAY 10TH 2025-26'},{id:84,title:'BIHAR BOARD ABHAY 10TH 2025-26'},
+      {id:85,title:'SCIENCE 11TH (PCMB) - NIRBHAY 2025-26'},{id:86,title:'SCIENCE 12TH (PCMB) - NIRBHAY 2025-26'},
+      {id:87,title:'HUMANITIES 11TH - NIRBHAY 2025-26'},{id:88,title:'HUMANITIES 12TH - NIRBHAY 2025-26'},
+      {id:89,title:'COMMERCE 11TH - NIRBHAY 2025-26'},{id:90,title:'COMMERCE 12TH - NIRBHAY 2025-26'},
+      {id:91,title:'COMMERCE NIRBHAY PRO 2025-26'},{id:92,title:'SCIENCE NIRBHAY PRO 2025-26'},{id:93,title:'HUMANITIES NIRBHAY PRO 2025-26'},
+      {id:53,title:'PRARAMBH HUMANITIES 11TH 2025-26'},{id:55,title:'PRARAMBH SCIENCE 11TH (PCMB) 2025-26'},{id:56,title:'PRARAMBH COMMERCE 11TH 2025-26'},
+      {id:58,title:'PRARAMBH SCIENCE 12TH (PCMB) 2025-26'},{id:57,title:'PRARAMBH COMMERCE 12TH 2025-26'},{id:59,title:'PRARAMBH HUMANITIES 12TH 2025-26'}
+    ];
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const batchId = urlParams.get('id') || 183;
+    const API_BASE = 'https://1api.notjitu.workers.dev';
+
+    let currentPath = [{id: '0', title: 'Home'}];
+    let folderCache = {};
+    let liveDataCache = null;
+    let liveTimerIntervals = [];
+
+    // Init
+    const batchInfo = allBatches.find(b => b.id == batchId) || {title: 'Batch Details', thumbnail: 'https://decicqog4ulhy.cloudfront.net/0/admin_v2/uploads/courses/thumbnail/2671188_1_logo.jpg'};
+    document.getElementById('batchTitle').innerText = batchInfo.title;
+    if (batchInfo.thumbnail) document.getElementById('batchThumb').src = batchInfo.thumbnail;
+
+    loadOverview();
+
+    function checkAccess() {
+      const access = localStorage.getItem('asm_access');
+      if (!access) return false;
+      try { const d = JSON.parse(access); return d.expiry > Date.now(); } catch { return false; }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+
+      if (tab === 'content' && currentPath.length === 1) loadContent('0');
+      if (tab === 'live' && !liveDataCache) loadLive();
+    }
+
+    async function loadOverview() {
+      try {
+        const res = await fetch(`${API_BASE}/nt/course-details`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({course_id: parseInt(batchId) || batchId})
+        });
+        const json = await res.json();
+        
+        let data = null;
+        if (Array.isArray(json.data)) {
+          data = json.data.find(d => d.type === 'overview')?.data?.[0]?.layout_data?.[0];
+        }
+
+        if (data) {
+          document.getElementById('overviewSpinner').style.display = 'none';
+          document.getElementById('overviewData').style.display = 'block';
+          document.getElementById('ovPrice').innerText = `₹${data.offer_price || '0'}`;
+          if (data.mrp) document.getElementById('ovMrp').innerText = `₹${data.mrp}`;
+          if (data.discount_percentage) document.getElementById('ovDiscount').innerText = `${data.discount_percentage}% OFF`;
+          
+          let desc = data.description || '';
+          // Remove 199 yearly plan references if they exist
+          desc = desc.replace(/₹199/g, '').replace(/199 yearly plan/gi, '');
+          document.getElementById('ovDesc').innerHTML = desc;
+        } else {
+          document.getElementById('overviewSpinner').innerHTML = 'Overview not available.';
+        }
+      } catch (e) {
+        console.error('Overview load error:', e);
+        document.getElementById('overviewSpinner').innerHTML = 'Failed to load details.';
+      }
+    }
+
+    function renderBreadcrumbs() {
+      const bc = document.getElementById('breadcrumbs');
+      bc.innerHTML = '';
+      currentPath.forEach((p, index) => {
+        const span = document.createElement('span');
+        span.className = 'crumb ' + (index === currentPath.length - 1 ? 'active' : '');
+        span.innerText = p.title;
+        if (index < currentPath.length - 1) {
+          span.onclick = () => {
+            currentPath = currentPath.slice(0, index + 1);
+            loadContent(p.id);
+          };
+          const sep = document.createElement('span');
+          sep.innerText = ' > ';
+          sep.style.margin = '0 8px';
+          bc.appendChild(span);
+          bc.appendChild(sep);
+        } else {
+          bc.appendChild(span);
+        }
+      });
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m ${s}s`;
+    }
+
+    async function loadContent(folderId) {
+      const grid = document.getElementById('contentGrid');
+      const spinner = document.getElementById('contentSpinner');
+      
+      grid.innerHTML = '';
+      renderBreadcrumbs();
+      
+      if (folderCache[folderId]) {
+        renderContentItems(folderCache[folderId]);
+        return;
+      }
+
+      spinner.style.display = 'block';
+
+      try {
+        const res = await fetch(`${API_BASE}/nt/all-content`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({course_id: batchId, folder_id: folderId})
+        });
+        const json = await res.json();
+        folderCache[folderId] = json.data || [];
+        spinner.style.display = 'none';
+        renderContentItems(folderCache[folderId]);
+      } catch (e) {
+        spinner.innerHTML = 'Failed to load content.';
+      }
+    }
+
+    function renderContentItems(items) {
+      const grid = document.getElementById('contentGrid');
+      grid.innerHTML = '';
+      
+      if (!items || items.length === 0) {
+        grid.innerHTML = '<div style="color:var(--stone-400); grid-column:1/-1; text-align:center; padding:40px;">Folder is empty</div>';
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const d = item.data;
+        const thumb = d.thumbnail || 'https://decicqog4ulhy.cloudfront.net/0/admin_v2/uploads/courses/thumbnail/2671188_1_logo.jpg';
+        
+        const el = document.createElement('div');
+        el.className = 'item-card animate-fade-up';
+        el.style.animationDelay = `${index * 30}ms`;
+        
+        let metaHtml = '';
+        if (item.type === 'folder') {
+          const vCount = d.content_counts?.video?.free || 0;
+          const pCount = d.content_counts?.pdf?.free || 0;
+          metaHtml = `<span>📁 Folder</span><span>V: ${vCount} | P: ${pCount}</span>`;
+          el.onclick = () => {
+            currentPath.push({id: item.entity_id, title: item.title});
+            loadContent(item.entity_id);
+          };
+        } else {
+          const duration = formatDuration(d.duration);
+          const date = new Date(item.created_at * 1000).toLocaleDateString();
+          metaHtml = `<span>▶ Video</span><span>${duration}</span>`;
+          el.onclick = () => handlePlay(item);
+        }
+
+        el.innerHTML = `
+          <div style="position:relative">
+            <img src="${thumb}" class="item-thumb" loading="lazy">
+          </div>
+          <div class="item-info">
+            <div class="item-title line-clamp-2">${item.title}</div>
+            <div class="item-meta">${metaHtml}</div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+    async function handlePlay(item) {
+      if (!checkAccess()) {
+        window.location.href = 'get-access.html?redirect=' + encodeURIComponent(window.location.href);
+        return;
+      }
+
+      const loader = document.getElementById('loader');
+      loader.classList.add('show');
+
+      let url = item.data.file_url;
+      
+      if (!url) {
+        try {
+          const res = await fetch(`${API_BASE}/nt/details?content_id=${item.entity_id}&course_id=${batchId}`);
+          const json = await res.json();
+          url = json.data?.file_url;
+        } catch (e) {
+          loader.classList.remove('show');
+          alert('Failed to fetch video URL.');
+          return;
+        }
+      }
+
+      loader.classList.remove('show');
+
+      if (!url) {
+        alert('Video URL not available.');
+        return;
+      }
+
+      if (url.includes('.m3u8') || url.includes('.mpd') || url.includes('.mp4')) {
+        window.location.href = `player.html?url=${encodeURIComponent(url)}&title=${encodeURIComponent(item.title)}`;
+      } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const ytIdMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+        if (ytIdMatch) {
+          window.open(`https://m.youtube.com/watch?v=${ytIdMatch[1]}`, '_blank');
+        } else {
+          window.open(url, '_blank');
+        }
+      } else {
+        window.open(url, '_blank');
+      }
+    }
+
+    async function loadLive() {
+      const spinner = document.getElementById('liveSpinner');
+      spinner.style.display = 'block';
+      document.getElementById('liveEmpty').style.display = 'none';
+      document.getElementById('liveGrid').innerHTML = '';
+
+      try {
+        const res = await fetch(`${API_BASE}/nt/live?batchid=${batchId}`);
+        const json = await res.json();
+        liveDataCache = json.data || [];
+        spinner.style.display = 'none';
+        switchLiveTab('live');
+      } catch (e) {
+        spinner.innerHTML = 'Failed to load live classes.';
+      }
+    }
+
+    function switchLiveTab(type) {
+      document.getElementById('btnLive').classList.remove('active');
+      document.getElementById('btnUpcoming').classList.remove('active');
+      document.getElementById(type === 'live' ? 'btnLive' : 'btnUpcoming').classList.add('active');
+
+      liveTimerIntervals.forEach(clearInterval);
+      liveTimerIntervals = [];
+
+      const grid = document.getElementById('liveGrid');
+      const empty = document.getElementById('liveEmpty');
+      grid.innerHTML = '';
+      
+      const filtered = liveDataCache.filter(item => type === 'live' ? item.is_live == 1 : item.is_live == 0);
+
+      if (filtered.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      filtered.forEach((item, index) => {
+        const el = document.createElement('div');
+        el.className = 'item-card animate-fade-up';
+        el.style.animationDelay = `${index * 50}ms`;
+        
+        let badgeHtml = '';
+        let extraHtml = '';
+        const thumb = item.thumbnail || 'https://decicqog4ulhy.cloudfront.net/0/admin_v2/uploads/courses/thumbnail/2671188_1_logo.jpg';
+        const dateObj = new Date(item.created_at * 1000);
+
+        if (type === 'live') {
+          badgeHtml = `<div class="badge-live">LIVE</div>`;
+          extraHtml = `
+            <div style="font-size:12px; color:var(--stone-400); margin:8px 0;">Started at ${dateObj.toLocaleTimeString()}</div>
+            <button style="width:100%; padding:10px; background:var(--cyan); color:#000; border-radius:8px; font-weight:800; margin-top:8px;">WATCH NOW</button>
+          `;
+          el.onclick = () => handlePlay(item);
+        } else {
+          badgeHtml = `<div class="badge-soon">SOON</div>`;
+          const timerId = `timer-${item.entity_id}`;
+          extraHtml = `
+            <div style="font-size:12px; color:var(--stone-400); margin:8px 0;">Scheduled for ${dateObj.toLocaleString()}</div>
+            <div class="countdown-timer" id="${timerId}">00:00:00</div>
+          `;
+          
+          // Setup countdown timer
+          const updateTimer = () => {
+            const now = new Date().getTime();
+            const diff = dateObj.getTime() - now;
+            if (diff <= 0) {
+              document.getElementById(timerId).innerText = "Starting...";
+              return;
+            }
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById(timerId).innerText = 
+              `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          };
+          
+          liveTimerIntervals.push(setInterval(updateTimer, 1000));
+          setTimeout(updateTimer, 0);
+        }
+
+        el.innerHTML = `
+          <div style="position:relative">
+            <img src="${thumb}" class="item-thumb">
+            ${badgeHtml}
+          </div>
+          <div class="item-info">
+            <div class="item-title line-clamp-2">${item.title}</div>
+            ${item.course?.title ? `<div style="font-size:11px; color:var(--blue-400); margin-bottom:4px;">${item.course.title}</div>` : ''}
+            <div style="margin-top:auto">${extraHtml}</div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+  </script>
+</body>
+</html>

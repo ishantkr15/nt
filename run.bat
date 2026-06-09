@@ -1,0 +1,5 @@
+@echo off
+echo Starting local server on http://localhost:8080
+echo Keep this window open and go to http://localhost:8080 in your browser!
+powershell -Command "$listener = New-Object System.Net.HttpListener; $listener.Prefixes.Add('http://localhost:8080/'); $listener.Start(); Write-Host 'Server is running! Press Ctrl+C to stop.'; while ($listener.IsListening) { $context = $listener.GetContext(); $response = $context.Response; $request = $context.Request; $path = $request.Url.LocalPath; if ($path -eq '/') { $path = '/index.html' }; $file = Join-Path (Get-Location) $path; if (Test-Path $file -PathType Leaf) { $bytes = [System.IO.File]::ReadAllBytes($file); $ext = [System.IO.Path]::GetExtension($file); $mime = switch ($ext) { '.html' {'text/html'} '.css' {'text/css'} '.js' {'application/javascript'} '.png' {'image/png'} '.jpg' {'image/jpeg'} default {'application/octet-stream'} }; $response.ContentType = $mime; $response.ContentLength64 = $bytes.Length; $response.OutputStream.Write($bytes, 0, $bytes.Length) } else { $response.StatusCode = 404 }; $response.Close() }"
+pause
