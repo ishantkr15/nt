@@ -306,7 +306,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const batchId = urlParams.get('id') || 183;
-    const API_BASE = 'https://1api.notjitu.workers.dev';
+    const API_BASE = '/api/proxy?path=';
 
     let currentPath = [{id: '0', title: 'Home'}];
     let folderCache = {};
