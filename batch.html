@@ -321,7 +321,18 @@
     loadOverview();
 
     function checkAccess() {
-      return true; // Auth disabled for now
+      try {
+        const stored = localStorage.getItem('asm_access');
+        if (!stored) return false;
+        const data = JSON.parse(stored);
+        if (data.expiry && data.expiry > Date.now()) {
+          return true;
+        }
+        localStorage.removeItem('asm_access');
+        return false;
+      } catch (e) {
+        return false;
+      }
     }
 
     function switchTab(tab) {

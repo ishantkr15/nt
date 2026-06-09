@@ -670,7 +670,7 @@
         showActiveBanner();
       }
 
-      // Check if we arrived from AroLinks with a code
+      // Check if we arrived from VPLINK with a code
       const urlParams = new URLSearchParams(window.location.search);
       const codeParam = urlParams.get('code');
       
@@ -749,8 +749,8 @@
       }
     }
 
-    // ---- AROLINKS GENERATION ----
-    const AROLINKS_API_TOKEN = 'c9f2a208dc34c5a01ff3653a8070ce998a3103fe';
+    // ---- VPLINK GENERATION ----
+    const VPLINK_API_TOKEN = 'bb0082e0ede156f2a39bf274f943aa567155b660';
     async function openLinkShortener() {
       const btn = document.getElementById('getCodeBtn');
       btn.disabled = true;
@@ -763,8 +763,8 @@
         // 2. Save it locally to verify when they return
         localStorage.setItem(PENDING_CODE_KEY, randomCode);
         
-        // 3. Build the destination URL they will be sent to after AroLinks
-        // Default to live site if testing locally to prevent AroLinks Invalid URL errors
+        // 3. Build the destination URL they will be sent to after VPLINK
+        // Default to live site if testing locally to prevent VPLINK Invalid URL errors
         let destUrl = 'https://nexttoppers.asmultiverse.in/get-access.html?code=' + randomCode;
         if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
             destUrl = window.location.origin + window.location.pathname + '?code=' + randomCode;
@@ -777,7 +777,7 @@
         }
         
         // 4. Call our Vercel API proxy to securely bypass CORS
-        const apiUrl = `/api/arolinks?url=${encodeURIComponent(destUrl)}`;
+        const apiUrl = `/api/vplink?url=${encodeURIComponent(destUrl)}`;
         
         const res = await fetch(apiUrl);
         const data = await res.json();
