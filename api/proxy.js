@@ -1,58 +1,76 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const config = {
+  runtime: 'edge',
+};
 
+export default async function handler(req) {
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
 
   try {
-    const { path } = req.query; // pass path as query param, e.g. ?path=/nt/course-details
+    const url = new URL(req.url);
+    const path = url.searchParams.get('path');
+
     if (!path) {
-      return res.status(400).json({ success: false, message: 'Path required' });
+      return new Response(JSON.stringify({ success: false, message: 'Path required' }), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
 
-    const targetUrl = `https://1api.notjitu.workers.dev${path}`;
-
-    // Pass along query parameters other than 'path'
-    const queryParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(req.query)) {
-      if (key !== 'path') {
-        queryParams.append(key, value);
-      }
-    }
+    const targetUrl = new URL(`https://1api.notjitu.workers.dev${path}`);
     
-    const finalUrl = queryParams.toString() ? `${targetUrl}?${queryParams.toString()}` : targetUrl;
+    // Copy all other search params
+    url.searchParams.forEach((value, key) => {
+      if (key !== 'path') {
+        targetUrl.searchParams.append(key, value);
+      }
+    });
+
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    headers.set('Origin', 'https://www.notjitu.in');
+    headers.set('Referer', 'https://www.notjitu.in/');
 
     const options = {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Origin': 'https://www.notjitu.in',
-        'Referer': 'https://www.notjitu.in/'
-      }
+      headers: headers,
     };
 
-    if (req.method === 'POST') {
-      options.body = JSON.stringify(req.body);
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      options.body = req.body; // Pipe the stream directly
     }
 
-    const fetchRes = await fetch(finalUrl, options);
+    const fetchRes = await fetch(targetUrl.toString(), options);
     
-    // We get JSON response back from notjitu
-    const data = await fetchRes.text();
-    let parsedData;
-    try {
-      parsedData = JSON.parse(data);
-    } catch {
-      parsedData = { success: false, raw: data };
-    }
-
-    res.status(fetchRes.status).json(parsedData);
+    // Copy response headers and inject CORS
+    const responseHeaders = new Headers(fetchRes.headers);
+    responseHeaders.set('Access-Control-Allow-Origin', '*');
+    
+    return new Response(fetchRes.body, {
+      status: fetchRes.status,
+      statusText: fetchRes.statusText,
+      headers: responseHeaders
+    });
   } catch (err) {
-    console.error("Proxy error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    return new Response(JSON.stringify({ success: false, message: err.message }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
   }
 }
